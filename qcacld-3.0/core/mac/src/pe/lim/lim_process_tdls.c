@@ -176,25 +176,6 @@ enum tdls_peer_capability {
 #define TID_AC_VI                  4
 #define TID_AC_BK                  1
 
-#ifdef WLAN_DEBUG
-static const uint8_t *lim_trace_tdls_action_string(uint8_t tdlsActionCode)
-{
-	switch (tdlsActionCode) {
-		CASE_RETURN_STRING(SIR_MAC_TDLS_SETUP_REQ);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_SETUP_RSP);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_SETUP_CNF);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_TEARDOWN);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_PEER_TRAFFIC_IND);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_CH_SWITCH_REQ);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_CH_SWITCH_RSP);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_PEER_TRAFFIC_RSP);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_DIS_REQ);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_DIS_RSP);
-	}
-	return (const uint8_t *)"UNKNOWN";
-}
-#endif
-
 /*
  * initialize TDLS setup list and related data structures.
  */
@@ -3285,16 +3266,20 @@ void lim_process_tdls_del_sta_rsp(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
+	qdf_mem_copy(peer_mac.bytes,
+		     del_sta_params->staMac, QDF_MAC_ADDR_SIZE);
+
 	sta_ds = dph_lookup_hash_entry(mac_ctx, del_sta_params->staMac,
 			&peer_idx, &session_entry->dph.dphHashTable);
 	if (!sta_ds) {
-		pe_err("DPH Entry for STA: %X is missing",
-			DPH_STA_HASH_INDEX_PEER);
+		pe_err("DPH Entry for STA: %X is missing release the serialization command",
+		       DPH_STA_HASH_INDEX_PEER);
+		lim_send_sme_tdls_del_sta_rsp(mac_ctx,
+					      session_entry->smeSessionId,
+					      peer_mac, NULL,
+					      QDF_STATUS_SUCCESS);
 		goto skip_event;
 	}
-
-	qdf_mem_copy(peer_mac.bytes,
-			del_sta_params->staMac, QDF_MAC_ADDR_SIZE);
 
 	if (QDF_STATUS_SUCCESS != del_sta_params->status) {
 		pe_err("DEL STA failed!");

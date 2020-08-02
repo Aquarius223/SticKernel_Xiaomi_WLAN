@@ -35,66 +35,6 @@
 #include "wlan_p2p_off_chan_tx.h"
 
 /**
- * p2p_get_cmd_type_str() - parse cmd to string
- * @cmd_type: P2P cmd type
- *
- * This function parse P2P cmd to string.
- *
- * Return: command string
- */
-#ifdef WLAN_DEBUG
-static char *p2p_get_cmd_type_str(enum p2p_cmd_type cmd_type)
-{
-	switch (cmd_type) {
-	case P2P_ROC_REQ:
-		return "P2P roc request";
-	case P2P_CANCEL_ROC_REQ:
-		return "P2P cancel roc request";
-	case P2P_MGMT_TX:
-		return "P2P mgmt tx request";
-	case P2P_MGMT_TX_CANCEL:
-		return "P2P cancel mgmt tx request";
-	case P2P_CLEANUP_ROC:
-		return "P2P cleanup roc";
-	case P2P_CLEANUP_TX:
-		return "P2P cleanup tx";
-	case P2P_SET_RANDOM_MAC:
-		return "P2P set random mac";
-	default:
-		return "Invalid P2P command";
-	}
-}
-
-/**
- * p2p_get_event_type_str() - parase event to string
- * @event_type: P2P event type
- *
- * This function parse P2P event to string.
- *
- * Return: event string
- */
-static char *p2p_get_event_type_str(enum p2p_event_type event_type)
-{
-	switch (event_type) {
-	case P2P_EVENT_SCAN_EVENT:
-		return "P2P scan event";
-	case P2P_EVENT_MGMT_TX_ACK_CNF:
-		return "P2P mgmt tx ack event";
-	case P2P_EVENT_RX_MGMT:
-		return "P2P mgmt rx event";
-	case P2P_EVENT_LO_STOPPED:
-		return "P2P lo stop event";
-	case P2P_EVENT_NOA:
-		return "P2P noa event";
-	case P2P_EVENT_ADD_MAC_RSP:
-		return "P2P add mac filter resp event";
-	default:
-		return "Invalid P2P event";
-	}
-}
-#endif
-
-/**
  * p2p_psoc_obj_create_notification() - Function to allocate per P2P
  * soc private object
  * @soc: soc context

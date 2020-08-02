@@ -98,54 +98,6 @@ void wlan_roam_debug_log(uint8_t vdev_id, uint8_t op,
 qdf_export_symbol(wlan_roam_debug_log);
 
 /**
- * wlan_roam_debug_string() - convert operation value to printable string
- * @op: operation identifier
- *
- * Return: printable string for the operation
- */
-#ifdef WLAN_DEBUG
-static char *wlan_roam_debug_string(uint32_t op)
-{
-	switch (op) {
-	case DEBUG_PEER_CREATE_SEND:
-		return "peer create send";
-	case DEBUG_PEER_CREATE_RESP:
-		return "peer create resp_event";
-	case DEBUG_PEER_DELETE_SEND:
-		return "peer delete send";
-	case DEBUG_PEER_DELETE_RESP:
-		return "peer delete resp_event";
-	case DEBUG_PEER_MAP_EVENT:
-		return "peer map event";
-	case DEBUG_PEER_UNMAP_EVENT:
-		return "peer unmap event";
-	case DEBUG_PEER_UNREF_DELETE:
-		return "peer unref delete";
-	case DEBUG_DELETING_PEER_OBJ:
-		return "peer obj deleted";
-	case DEBUG_ROAM_SYNCH_IND:
-		return "roam synch ind event";
-	case DEBUG_ROAM_SYNCH_CNF:
-		return "roam sync conf sent";
-	case DEBUG_ROAM_SYNCH_FAIL:
-		return "roam sync fail event";
-	case DEBUG_ROAM_EVENT:
-		return "roam event";
-	case DEBUG_WOW_ROAM_EVENT:
-		return "wow wakeup roam event";
-	case DEBUG_BUS_SUSPEND:
-		return "host suspend";
-	case DEBUG_BUS_RESUME:
-		return "host wakeup";
-	case DEBUG_WOW_REASON:
-		return "wow wakeup reason";
-	default:
-		return "unknown";
-	}
-}
-#endif
-
-/**
  * wlan_roam_debug_dump_table() - Print the wlan roam debug log records
  * print all the valid debug records in the order of timestamp
  *

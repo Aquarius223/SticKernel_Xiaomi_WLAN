@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (C) 2020 Amktiao.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -367,8 +368,6 @@ int hdd_inspect_dhcp_packet(struct hdd_adapter *adapter,
 	enum qdf_proto_subtype subtype = QDF_PROTO_INVALID;
 	struct hdd_station_info *hdd_sta_info;
 	int errno = 0;
-
-	//hdd_debug("sta_id=%d, dir=%d", sta_id, dir);
 
 	if (sta_id >= WLAN_MAX_STA_COUNT) {
 		hdd_err("Invalid sta id: %d", sta_id);
@@ -951,19 +950,6 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rx_buf)
 
 		skb->protocol = eth_type_trans(skb, skb->dev);
 
-		/* hold configurable wakelock for unicast traffic */
-		if (!hdd_is_current_high_throughput(hdd_ctx) &&
-		    hdd_ctx->config->rx_wakelock_timeout &&
-		    skb->pkt_type != PACKET_BROADCAST &&
-		    skb->pkt_type != PACKET_MULTICAST) {
-			cds_host_diag_log_work(&hdd_ctx->rx_wake_lock,
-						   hdd_ctx->config->rx_wakelock_timeout,
-						   WIFI_POWER_EVENT_WAKELOCK_HOLD_RX);
-			qdf_wake_lock_timeout_acquire(&hdd_ctx->rx_wake_lock,
-							  hdd_ctx->config->
-								  rx_wakelock_timeout);
-		}
-
 		/* Remove SKB from internal tracking table before submitting
 		 * it to stack
 		 */
@@ -1042,6 +1028,8 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 			     sizeof(struct hdd_station_info));
 		spin_unlock_bh(&adapter->sta_info_lock);
 	}
+
+	hdd_softap_deinit_tx_rx_sta(adapter, sta_id);
 
 	hdd_ctx->sta_to_adapter[sta_id] = NULL;
 	sme_config = qdf_mem_malloc(sizeof(*sme_config));

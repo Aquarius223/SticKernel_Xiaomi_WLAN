@@ -536,6 +536,11 @@ static QDF_STATUS p2p_populate_mac_header(
 	psoc = tx_ctx->p2p_soc_obj->soc;
 
 	wh = (struct wlan_frame_hdr *)tx_ctx->buf;
+	/*
+	 * Remove the WEP bit if already set, p2p_populate_rmf_field will set it
+	 * if required.
+	 */
+	wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 	mac_addr = wh->i_addr1;
 	pdev_id = wlan_get_pdev_id_from_vdev_id(psoc, tx_ctx->vdev_id,
 						WLAN_P2P_ID);
@@ -571,72 +576,6 @@ static QDF_STATUS p2p_populate_mac_header(
 
 	return QDF_STATUS_SUCCESS;
 }
-
-/**
- * p2p_get_frame_type_str() - parse frame type to string
- * @frame_info: frame information
- *
- * This function parse frame type to string.
- *
- * Return: command string
- */
-#ifdef WLAN_DEBUG
-static char *p2p_get_frame_type_str(struct p2p_frame_info *frame_info)
-{
-	if (frame_info->type == P2P_FRAME_NOT_SUPPORT)
-		return "Not support frame";
-
-	if (frame_info->sub_type == P2P_MGMT_NOT_SUPPORT)
-		return "Not support sub frame";
-
-	switch (frame_info->sub_type) {
-	case P2P_MGMT_PROBE_REQ:
-		return "P2P roc request";
-	case P2P_MGMT_PROBE_RSP:
-		return "P2P cancel roc request";
-	case P2P_MGMT_ACTION:
-		break;
-	default:
-		return "Invalid P2P command";
-	}
-
-	if (frame_info->action_type == P2P_ACTION_PRESENCE_REQ)
-		return "P2P action presence request";
-	if (frame_info->action_type == P2P_ACTION_PRESENCE_RSP)
-		return "P2P action presence response";
-
-	switch (frame_info->public_action_type) {
-	case P2P_PUBLIC_ACTION_NEG_REQ:
-		return "GO negotiation request frame";
-	case P2P_PUBLIC_ACTION_NEG_RSP:
-		return "GO negotiation response frame";
-	case P2P_PUBLIC_ACTION_NEG_CNF:
-		return "GO negotiation confirm frame";
-	case P2P_PUBLIC_ACTION_INVIT_REQ:
-		return "P2P invitation request";
-	case P2P_PUBLIC_ACTION_INVIT_RSP:
-		return "P2P invitation response";
-	case P2P_PUBLIC_ACTION_DEV_DIS_REQ:
-		return "Device discoverability request";
-	case P2P_PUBLIC_ACTION_DEV_DIS_RSP:
-		return "Device discoverability response";
-	case P2P_PUBLIC_ACTION_PROV_DIS_REQ:
-		return "Provision discovery request";
-	case P2P_PUBLIC_ACTION_PROV_DIS_RSP:
-		return "Provision discovery response";
-	case P2P_PUBLIC_ACTION_GAS_INIT_REQ:
-		return "GAS init request";
-	case P2P_PUBLIC_ACTION_GAS_INIT_RSP:
-		return "GAS init response";
-	case P2P_PUBLIC_ACTION_GAS_COMB_REQ:
-		return "GAS come back request";
-	case P2P_PUBLIC_ACTION_GAS_COMB_RSP:
-		return "GAS come back response";
-	default:
-		return "Not support action frame";
-	}
-}
-#endif
 
 /**
  * p2p_init_frame_info() - init frame information structure
@@ -1354,18 +1293,38 @@ end:
  */
 static void p2p_tx_timeout(void *pdata)
 {
-	struct tx_action_context *tx_ctx = pdata;
+	QDF_STATUS status, ret;
+	qdf_list_node_t *p_node;
+	struct tx_action_context *tx_ctx;
+	struct p2p_soc_priv_obj *p2p_soc_obj;
 
 	p2p_info("pdata:%pK", pdata);
-
-	if (!tx_ctx || !(tx_ctx->p2p_soc_obj)) {
-		p2p_err("invalid tx context or p2p soc object");
+	p2p_soc_obj = (struct p2p_soc_priv_obj *)pdata;
+	if (!p2p_soc_obj) {
+		p2p_err("null p2p psoc obj");
 		return;
 	}
 
-	qdf_mc_timer_destroy(&tx_ctx->tx_timer);
-	p2p_send_tx_conf(tx_ctx, false);
-	p2p_remove_tx_context(tx_ctx);
+	status = qdf_list_peek_front(&p2p_soc_obj->tx_q_ack, &p_node);
+	while (QDF_IS_STATUS_SUCCESS(status)) {
+		tx_ctx = qdf_container_of(p_node,
+					  struct tx_action_context, node);
+		status = qdf_list_peek_next(&p2p_soc_obj->tx_q_ack,
+					    p_node, &p_node);
+		if (QDF_TIMER_STATE_STOPPED ==
+		    qdf_mc_timer_get_current_state(&tx_ctx->tx_timer)) {
+			ret = qdf_list_remove_node(&p2p_soc_obj->tx_q_ack,
+						   &tx_ctx->node);
+			if (ret == QDF_STATUS_SUCCESS) {
+				qdf_mc_timer_destroy(&tx_ctx->tx_timer);
+				p2p_send_tx_conf(tx_ctx, false);
+				qdf_mem_free(tx_ctx->buf);
+				qdf_mem_free(tx_ctx);
+			} else
+				p2p_err("remove %pK from roc_q fail",
+					tx_ctx);
+		}
+	}
 }
 
 /**
@@ -1383,15 +1342,15 @@ static QDF_STATUS p2p_enable_tx_timer(struct tx_action_context *tx_ctx)
 	p2p_debug("tx context:%pK", tx_ctx);
 
 	status = qdf_mc_timer_init(&tx_ctx->tx_timer,
-			QDF_TIMER_TYPE_SW, p2p_tx_timeout,
-			tx_ctx);
+				   QDF_TIMER_TYPE_SW, p2p_tx_timeout,
+				   tx_ctx->p2p_soc_obj);
 	if (status != QDF_STATUS_SUCCESS) {
 		p2p_err("failed to init tx timer");
 		return status;
 	}
 
 	status = qdf_mc_timer_start(&tx_ctx->tx_timer,
-			P2P_ACTION_FRAME_TX_TIMEOUT);
+				    P2P_ACTION_FRAME_TX_TIMEOUT);
 	if (status != QDF_STATUS_SUCCESS)
 		p2p_err("tx timer start failed");
 
@@ -1477,6 +1436,7 @@ static QDF_STATUS p2p_populate_rmf_field(struct tx_action_context *tx_ctx,
 	uint8_t *frame;
 	uint32_t frame_len;
 	struct p2p_soc_priv_obj *p2p_soc_obj;
+	uint8_t action_category;
 
 	p2p_soc_obj = tx_ctx->p2p_soc_obj;
 
@@ -1491,8 +1451,14 @@ static QDF_STATUS p2p_populate_rmf_field(struct tx_action_context *tx_ctx,
 	wh = (struct wlan_frame_hdr *)(*ppbuf);
 	action_hdr = (struct action_frm_hdr *)(*ppbuf + sizeof(*wh));
 
-	if (!is_rmf_mgmt_action_frame(action_hdr->action_category)) {
-		p2p_debug("non rmf act frame 0x%x cat %x",
+	/*
+	 * For Action frame which are not handled, the resp is sent back to the
+	 * source without change, except that MSB of the Category set to 1, so
+	 * to get the actual action category we need to ignore the MSB.
+	 */
+	action_category = action_hdr->action_category & 0x7f;
+	if (!is_rmf_mgmt_action_frame(action_category)) {
+		p2p_debug("non rmf act frame 0x%x category %x",
 			  tx_ctx->frame_info.sub_type,
 			  action_hdr->action_category);
 		return QDF_STATUS_SUCCESS;

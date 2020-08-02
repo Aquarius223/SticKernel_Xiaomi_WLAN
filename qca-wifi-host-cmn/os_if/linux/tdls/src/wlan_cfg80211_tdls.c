@@ -483,24 +483,6 @@ error:
 	return status;
 }
 
-#ifdef WLAN_DEBUG
-static char *tdls_oper_to_str(enum nl80211_tdls_operation oper)
-{
-	switch (oper) {
-	case NL80211_TDLS_ENABLE_LINK:
-		return "TDLS_ENABLE_LINK";
-	case NL80211_TDLS_DISABLE_LINK:
-		return "TDLS_DISABLE_LINK";
-	case NL80211_TDLS_TEARDOWN:
-		return "TDLS_TEARDOWN";
-	case NL80211_TDLS_SETUP:
-		return "TDLS_SETUP";
-	default:
-		return "UNKNOWN:ERR";
-	}
-}
-#endif
-
 static enum tdls_command_type tdls_oper_to_cmd(enum nl80211_tdls_operation oper)
 {
 	if (oper == NL80211_TDLS_ENABLE_LINK)

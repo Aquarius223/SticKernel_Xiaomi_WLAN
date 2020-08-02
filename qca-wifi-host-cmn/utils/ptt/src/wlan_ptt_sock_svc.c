@@ -39,28 +39,12 @@
 static int32_t ptt_pid = INVALID_PID;
 #endif
 
-#define PTT_SOCK_DEBUG
-#ifdef PTT_SOCK_DEBUG
-#define PTT_TRACE(level, args ...) QDF_TRACE(QDF_MODULE_ID_QDF, level, ## args)
-#else
 #define PTT_TRACE(level, args ...)
-#endif
 
 #ifdef PTT_SOCK_DEBUG_VERBOSE
 /* Utility function to perform a hex dump */
 static void ptt_sock_dump_buf(const unsigned char *pbuf, int cnt)
 {
-	int i;
-
-	for (i = 0; i < cnt; i++) {
-		if ((i % 16) == 0)
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
-				  "\n%pK:", pbuf);
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO, " %02X",
-			  *pbuf);
-		pbuf++;
-	}
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO, "\n");
 }
 #endif
 

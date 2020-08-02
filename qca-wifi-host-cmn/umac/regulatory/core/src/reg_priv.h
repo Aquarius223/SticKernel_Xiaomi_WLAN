@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -28,23 +28,15 @@
 #include "reg_db.h"
 #include "reg_services.h"
 
-#define reg_log(level, args...) \
-	QDF_TRACE(QDF_MODULE_ID_REGULATORY, level, ## args)
-#define reg_logfl(level, format, args...) reg_log(level, FL(format), ## args)
-#define reg_alert(format, args...) \
-		reg_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define reg_err(format, args...) \
-		reg_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define reg_warn(format, args...) \
-		reg_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define reg_notice(format, args...) \
-		reg_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define reg_info(format, args...) \
-		reg_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
-#define reg_debug(format, args...) \
-		reg_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
-#define reg_debug_rl(params...) \
-	QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_REGULATORY, params)
+#define reg_log(level, args...)
+#define reg_logfl(level, format, args...)
+#define reg_alert(format, args...)
+#define reg_err(format, args...)
+#define reg_warn(format, args...)
+#define reg_notice(format, args...)
+#define reg_info(format, args...)
+#define reg_debug(format, args...)
+#define reg_debug_rl(params...)
 
 
 /**
@@ -58,6 +50,7 @@
  * @world_country_pending: In this array, element[phy_id] is true if any world
  *	country update is pending for pdev (phy_id).
  * @def_pdev_id: Default pdev id, used in case of MCL
+ * @ignore_fw_reg_offload_ind: Ignore FW reg offload indication
  */
 struct wlan_regulatory_psoc_priv_obj {
 	struct mas_chan_params mas_chan_params[PSOC_MAX_PHY_REG_CAP];
@@ -76,6 +69,7 @@ struct wlan_regulatory_psoc_priv_obj {
 	bool dfs_enabled;
 	enum band_info band_capability;
 	bool indoor_chan_enabled;
+	bool ignore_fw_reg_offload_ind;
 	bool enable_11d_supp_original;
 	bool enable_11d_supp;
 	bool is_11d_offloaded;

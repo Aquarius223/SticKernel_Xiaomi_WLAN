@@ -198,7 +198,14 @@ void wlan_hdd_classify_pkt(struct sk_buff *skb);
 
 #ifdef MSM_PLATFORM
 void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx);
+#ifdef RX_PERFORMANCE
 bool hdd_is_current_high_throughput(struct hdd_context *hdd_ctx);
+#else
+static inline bool hdd_is_current_high_throughput(struct hdd_context *hdd_ctx)
+{
+	return false;
+}
+#endif
 #define HDD_MSM_CFG(msm_cfg)	msm_cfg
 #else
 static inline void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx) {}
@@ -226,17 +233,8 @@ static inline void netif_trans_update(struct net_device *dev)
 {
 	dev->trans_start = jiffies;
 }
-
-#define TX_TIMEOUT_TRACE(dev, module_id) QDF_TRACE( \
-	module_id, QDF_TRACE_LEVEL_ERROR, \
-	"%s: Transmission timeout occurred jiffies %lu trans_start %lu", \
-	__func__, jiffies, dev->trans_start)
-#else
-#define TX_TIMEOUT_TRACE(dev, module_id) QDF_TRACE( \
-	module_id, QDF_TRACE_LEVEL_ERROR, \
-	"%s: Transmission timeout occurred jiffies %lu", \
-	__func__, jiffies)
 #endif
+#define TX_TIMEOUT_TRACE(dev, module_id)
 
 static inline void
 hdd_skb_fill_gso_size(struct net_device *dev, struct sk_buff *skb)

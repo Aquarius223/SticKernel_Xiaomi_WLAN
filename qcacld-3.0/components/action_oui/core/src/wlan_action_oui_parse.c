@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -76,35 +76,6 @@ static bool action_oui_string_to_hex(uint8_t *token, uint8_t *hex,
 
 	return true;
 }
-
-/**
- * action_oui_token_string() - converts enum value to string
- * token_id: enum value to be converted to string
- *
- * This function converts the enum value of type action_oui_token_type
- * to string
- *
- * Return: converted string
- */
-#ifdef WLAN_DEBUG
-static
-uint8_t *action_oui_token_string(enum action_oui_token_type token_id)
-{
-	switch (token_id) {
-		CASE_RETURN_STRING(ACTION_OUI_TOKEN);
-		CASE_RETURN_STRING(ACTION_OUI_DATA_LENGTH_TOKEN);
-		CASE_RETURN_STRING(ACTION_OUI_DATA_TOKEN);
-		CASE_RETURN_STRING(ACTION_OUI_DATA_MASK_TOKEN);
-		CASE_RETURN_STRING(ACTION_OUI_INFO_MASK_TOKEN);
-		CASE_RETURN_STRING(ACTION_OUI_MAC_ADDR_TOKEN);
-		CASE_RETURN_STRING(ACTION_OUI_MAC_MASK_TOKEN);
-		CASE_RETURN_STRING(ACTION_OUI_CAPABILITY_TOKEN);
-		CASE_RETURN_STRING(ACTION_OUI_END_TOKEN);
-	}
-
-	return (uint8_t *) "UNKNOWN";
-}
-#endif
 
 /**
  * validate_and_convert_oui() - validate and convert OUI str to hex array
@@ -848,16 +819,12 @@ check_for_vendor_ap_capabilities(struct action_oui_extension *extension,
 		}
 	}
 
-	if (extension->info_mask & ACTION_OUI_INFO_AP_CAPABILITY_BAND) {
-		if ((*extension->capability &
-		    ACTION_OUI_CAPABILITY_2G_BAND_MASK) &&
-		    !attr->enable_2g)
-			return false;
-		if ((*extension->capability &
-		    ACTION_CAPABILITY_5G_BAND_MASK) &&
-		    !attr->enable_5g)
-			return false;
-	}
+	if (extension->info_mask & ACTION_OUI_INFO_AP_CAPABILITY_BAND &&
+	    ((attr->enable_5g &&
+	    !(*extension->capability & ACTION_CAPABILITY_5G_BAND_MASK)) ||
+	    (attr->enable_2g &&
+	    !(*extension->capability & ACTION_OUI_CAPABILITY_2G_BAND_MASK))))
+		return false;
 
 	return true;
 }

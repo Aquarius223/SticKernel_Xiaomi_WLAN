@@ -265,28 +265,6 @@ QDF_STATUS ol_tx_dec_pool_ref(struct ol_tx_flow_pool_t *pool, bool force)
 }
 
 /**
- * ol_tx_flow_pool_status_to_str() - convert flow pool status to string
- * @status - flow pool status
- *
- * Returns: String corresponding to flow pool status
- */
-#ifdef WLAN_DEBUG
-static const char *ol_tx_flow_pool_status_to_str
-					(enum flow_pool_status status)
-{
-	switch (status) {
-	CASE_RETURN_STRING(FLOW_POOL_ACTIVE_UNPAUSED);
-	CASE_RETURN_STRING(FLOW_POOL_ACTIVE_PAUSED);
-	CASE_RETURN_STRING(FLOW_POOL_NON_PRIO_PAUSED);
-	CASE_RETURN_STRING(FLOW_POOL_INVALID);
-	CASE_RETURN_STRING(FLOW_POOL_INACTIVE);
-	default:
-		return "unknown";
-	}
-}
-#endif
-
-/**
  * ol_tx_dump_flow_pool_info() - dump global_pool and flow_pool info
  * @ctx: cdp_soc context, required only in lithium_dp flow control.
  *	 Remove void * while cleaning up cds_get_context.

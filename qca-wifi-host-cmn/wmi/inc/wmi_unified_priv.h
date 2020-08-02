@@ -69,28 +69,21 @@
 #define WMI_DIAG_RX_EVENT_DEBUG_MAX_ENTRY (256)
 #endif
 
-#define wmi_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_WMI, ## params)
-#define wmi_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_WMI, ## params)
-#define wmi_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_WMI, ## params)
-#define wmi_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_WMI, ## params)
-#define wmi_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_WMI, ## params)
-
-#define wmi_nofl_alert(params...) \
-	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_WMI, ## params)
-#define wmi_nofl_err(params...) \
-	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_WMI, ## params)
-#define wmi_nofl_warn(params...) \
-	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_WMI, ## params)
-#define wmi_nofl_info(params...) \
-	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_WMI, ## params)
-#define wmi_nofl_debug(params...) \
-	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_WMI, ## params)
-
-#define wmi_alert_rl(params...) QDF_TRACE_FATAL_RL(QDF_MODULE_ID_WMI, params)
-#define wmi_err_rl(params...) QDF_TRACE_ERROR_RL(QDF_MODULE_ID_WMI, params)
-#define wmi_warn_rl(params...) QDF_TRACE_WARN_RL(QDF_MODULE_ID_WMI, params)
-#define wmi_info_rl(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_WMI, params)
-#define wmi_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_WMI, params)
+#define wmi_alert(params...)
+#define wmi_err(params...)
+#define wmi_warn(params...)
+#define wmi_info(params...)
+#define wmi_debug(params...)
+#define wmi_nofl_alert(params...)
+#define wmi_nofl_err(params...)
+#define wmi_nofl_warn(params...)
+#define wmi_nofl_info(params...)
+#define wmi_nofl_debug(params...)
+#define wmi_alert_rl(params...)
+#define wmi_err_rl(params...)
+#define wmi_warn_rl(params...)
+#define wmi_info_rl(params...)
+#define wmi_debug_rl(params...)
 
 /**
  * struct wmi_command_debug - WMI command log buffer data type
@@ -370,6 +363,9 @@ QDF_STATUS (*send_modem_power_state_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_set_sta_ps_mode_cmd)(wmi_unified_t wmi_handle,
 			       uint32_t vdev_id, uint8_t val);
+
+QDF_STATUS (*send_idle_roam_monitor_cmd)(wmi_unified_t wmi_handle,
+					 uint8_t val);
 
 QDF_STATUS (*send_get_temperature_cmd)(wmi_unified_t wmi_handle);
 
@@ -701,8 +697,13 @@ QDF_STATUS (*send_dbr_cfg_cmd)(wmi_unified_t wmi_handle,
 				   struct direct_buf_rx_cfg_req *cfg);
 
 QDF_STATUS (*send_start_oem_data_cmd)(wmi_unified_t wmi_handle,
-			  uint32_t data_len,
-			  uint8_t *data);
+				      uint32_t data_len,
+				      uint8_t *data);
+
+#ifdef FEATURE_OEM_DATA
+QDF_STATUS (*send_start_oemv2_data_cmd)(wmi_unified_t wmi_handle,
+					struct oem_data *params);
+#endif
 
 QDF_STATUS
 (*send_dfs_phyerr_filter_offload_en_cmd)(wmi_unified_t wmi_handle,
@@ -821,9 +822,7 @@ QDF_STATUS (*send_roam_scan_offload_cmd)(wmi_unified_t wmi_handle,
 				 uint32_t command, uint32_t vdev_id);
 
 QDF_STATUS (*send_roam_scan_offload_scan_period_cmd)(wmi_unified_t wmi_handle,
-				     uint32_t scan_period,
-				     uint32_t scan_age,
-				     uint32_t vdev_id);
+					struct roam_scan_period_params *params);
 
 QDF_STATUS (*send_roam_scan_offload_chan_list_cmd)(wmi_unified_t wmi_handle,
 				   uint8_t chan_count,
@@ -1627,8 +1626,17 @@ QDF_STATUS (*extract_ndp_sch_update)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_btm_config)(wmi_unified_t wmi_handle,
 			      struct wmi_btm_config *params);
 
+QDF_STATUS (*send_roam_preauth_status)(wmi_unified_t wmi_handle,
+				struct wmi_roam_auth_status_params *params);
+
 QDF_STATUS (*send_roam_bss_load_config)(wmi_unified_t wmi_handle,
 					struct wmi_bss_load_config *params);
+QDF_STATUS (*send_disconnect_roam_params)(
+			wmi_unified_t wmi_handle,
+			struct wmi_disconnect_roam_params *req);
+
+QDF_STATUS (*send_idle_roam_params)(wmi_unified_t wmi_handle,
+				    struct wmi_idle_roam_params *req);
 
 QDF_STATUS (*send_obss_detection_cfg_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_obss_detection_cfg_param *obss_cfg_param);
@@ -1738,6 +1746,18 @@ QDF_STATUS (*extract_dfs_status_from_fw)(wmi_unified_t wmi_handle,
 #endif
 QDF_STATUS (*send_mws_coex_status_req_cmd)(wmi_unified_t wmi_handle,
 					   uint32_t vdev_id, uint32_t cmd_id);
+
+QDF_STATUS (*send_set_roam_trigger_cmd)(wmi_unified_t wmi_handle,
+					uint32_t vdev_id,
+					uint32_t trigger_bitmap);
+#ifdef FEATURE_ANI_LEVEL_REQUEST
+QDF_STATUS (*send_ani_level_cmd)(wmi_unified_t wmi_handle, uint32_t *freqs,
+				 uint8_t num_freqs);
+
+QDF_STATUS (*extract_ani_level)(uint8_t *evt_buf,
+				struct wmi_host_ani_level_event **info,
+				uint32_t *num_freqs);
+#endif /* FEATURE_ANI_LEVEL_REQUEST */
 };
 
 /* Forward declartion for psoc*/

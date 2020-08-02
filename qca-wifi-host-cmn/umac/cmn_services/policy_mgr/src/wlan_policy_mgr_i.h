@@ -135,23 +135,14 @@
 
 #define POLICY_MGR_DEFAULT_HW_MODE_INDEX 0xFFFF
 
-#define policy_mgr_log(level, args...) \
-		QDF_TRACE(QDF_MODULE_ID_POLICY_MGR, level, ## args)
-#define policy_mgr_logfl(level, format, args...) \
-		policy_mgr_log(level, FL(format), ## args)
-
-#define policy_mgr_alert(format, args...) \
-		policy_mgr_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define policy_mgr_err(format, args...) \
-		policy_mgr_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define policy_mgr_warn(format, args...) \
-		policy_mgr_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define policy_mgr_notice(format, args...) \
-		policy_mgr_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define policy_mgr_info(format, args...) \
-		policy_mgr_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
-#define policy_mgr_debug(format, args...) \
-		policy_mgr_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+#define policy_mgr_log(level, args...)
+#define policy_mgr_logfl(level, format, args...)
+#define policy_mgr_alert(format, args...)
+#define policy_mgr_err(format, args...)
+#define policy_mgr_warn(format, args...)
+#define policy_mgr_notice(format, args...)
+#define policy_mgr_info(format, args...)
+#define policy_mgr_debug(format, args...)
 
 #define PM_CONC_CONNECTION_LIST_VALID_INDEX(index) \
 		((MAX_NUMBER_OF_CONC_CONNECTIONS > index) && \

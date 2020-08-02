@@ -421,24 +421,6 @@ dec_ref:
 	return status;
 }
 
-#ifdef WLAN_DEBUG
-static char *tdls_get_oper_str(enum tdls_command_type cmd_type)
-{
-	switch (cmd_type) {
-	case TDLS_CMD_ENABLE_LINK:
-		return "Enable_TDLS_LINK";
-	case TDLS_CMD_DISABLE_LINK:
-		return "DISABLE_TDLS_LINK";
-	case TDLS_CMD_REMOVE_FORCE_PEER:
-		return "REMOVE_FORCE_PEER";
-	case TDLS_CMD_CONFIG_FORCE_PEER:
-		return "CONFIG_FORCE_PEER";
-	default:
-		return "ERR:UNKNOWN OPER";
-	}
-}
-#endif
-
 QDF_STATUS ucfg_tdls_oper(struct wlan_objmgr_vdev *vdev,
 			  const uint8_t *macaddr, enum tdls_command_type cmd)
 {

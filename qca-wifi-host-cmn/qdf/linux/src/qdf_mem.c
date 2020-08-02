@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -48,14 +48,14 @@
 #include <net/cnss_prealloc.h>
 #endif
 
-#ifdef MEMORY_DEBUG
-#include "qdf_debug_domain.h"
-#include <qdf_list.h>
-
 /* Preprocessor Definitions and Constants */
 #define QDF_MEM_MAX_MALLOC (4096 * 1024) /* 4 Mega Bytes */
 #define QDF_MEM_WARN_THRESHOLD 300 /* ms */
 #define QDF_DEBUG_STRING_SIZE 512
+
+#ifdef MEMORY_DEBUG
+#include "qdf_debug_domain.h"
+#include <qdf_list.h>
 
 static qdf_list_t qdf_mem_domains[QDF_DEBUG_DOMAIN_COUNT];
 static qdf_spinlock_t qdf_mem_list_lock;
@@ -1178,6 +1178,11 @@ void *qdf_mem_malloc(size_t size)
 {
 	void *ptr;
 
+	if (!size || size > QDF_MEM_MAX_MALLOC) {
+		qdf_err("Cannot malloc %zu bytes", size);
+		return NULL;
+	}
+
 	ptr = qdf_mem_prealloc_get(size);
 	if (ptr)
 		return ptr;
@@ -1272,10 +1277,10 @@ void qdf_mem_multi_pages_alloc(qdf_device_t osdev,
 	void **cacheable_pages = NULL;
 	uint16_t i;
 
-	pages->num_element_per_page = PAGE_SIZE / element_size;
+	pages->num_element_per_page = QDF_ALLOC_GRANULARITY / element_size;
 	if (!pages->num_element_per_page) {
 		qdf_print("Invalid page %d or element size %d",
-			  (int)PAGE_SIZE, (int)element_size);
+			  (int)QDF_ALLOC_GRANULARITY, (int)element_size);
 		goto out_fail;
 	}
 
@@ -1294,7 +1299,7 @@ void qdf_mem_multi_pages_alloc(qdf_device_t osdev,
 
 		cacheable_pages = pages->cacheable_pages;
 		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
-			cacheable_pages[page_idx] = qdf_mem_malloc(PAGE_SIZE);
+			cacheable_pages[page_idx] = qdf_mem_malloc(QDF_ALLOC_GRANULARITY);
 			if (!cacheable_pages[page_idx]) {
 				qdf_print("cacheable page alloc fail, pi %d",
 					  page_idx);
@@ -1314,7 +1319,7 @@ void qdf_mem_multi_pages_alloc(qdf_device_t osdev,
 		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
 			dma_pages->page_v_addr_start =
 				qdf_mem_alloc_consistent(osdev, osdev->dev,
-					 PAGE_SIZE,
+					 QDF_ALLOC_GRANULARITY,
 					&dma_pages->page_p_addr);
 			if (!dma_pages->page_v_addr_start) {
 				qdf_print("dmaable page alloc fail pi %d",
@@ -1322,7 +1327,7 @@ void qdf_mem_multi_pages_alloc(qdf_device_t osdev,
 				goto page_alloc_fail;
 			}
 			dma_pages->page_v_addr_end =
-				dma_pages->page_v_addr_start + PAGE_SIZE;
+				dma_pages->page_v_addr_start + QDF_ALLOC_GRANULARITY;
 			dma_pages++;
 		}
 		pages->cacheable_pages = NULL;
@@ -1337,7 +1342,7 @@ page_alloc_fail:
 	} else {
 		dma_pages = pages->dma_pages;
 		for (i = 0; i < page_idx; i++) {
-			qdf_mem_free_consistent(osdev, osdev->dev, PAGE_SIZE,
+			qdf_mem_free_consistent(osdev, osdev->dev, QDF_ALLOC_GRANULARITY,
 				dma_pages->page_v_addr_start,
 				dma_pages->page_p_addr, memctxt);
 			dma_pages++;
@@ -1378,7 +1383,7 @@ void qdf_mem_multi_pages_free(qdf_device_t osdev,
 	} else {
 		dma_pages = pages->dma_pages;
 		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
-			qdf_mem_free_consistent(osdev, osdev->dev, PAGE_SIZE,
+			qdf_mem_free_consistent(osdev, osdev->dev, QDF_ALLOC_GRANULARITY,
 				dma_pages->page_v_addr_start,
 				dma_pages->page_p_addr, memctxt);
 			dma_pages++;

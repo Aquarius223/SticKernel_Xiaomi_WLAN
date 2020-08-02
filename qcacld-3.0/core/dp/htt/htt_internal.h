@@ -160,7 +160,7 @@ struct htt_host_rx_desc_base {
  *    @posted: time-stamp when HTT message is recived
  *    @recvd : 0x48545452584D5367 ('HTTRXMSG')
  */
-#define HTT_RX_RING_BUFF_DBG_LIST          (2 * 1024)
+#define HTT_RX_RING_BUFF_DBG_LIST          (8 * 1024)
 struct rx_buf_debug {
 	qdf_dma_addr_t paddr;
 	qdf_nbuf_t     nbuf;
@@ -548,7 +548,7 @@ void htt_htc_pkt_free(struct htt_pdev_t *pdev, struct htt_htc_pkt *pkt);
 void htt_htc_pkt_pool_free(struct htt_pdev_t *pdev);
 
 #ifdef ATH_11AC_TXCOMPACT
-void htt_htc_misc_pkt_list_trim(struct htt_pdev_t *pdev, int level);
+void htt_htc_misc_pkt_list_trim(struct htt_pdev_t *pdev);
 
 void
 htt_htc_misc_pkt_list_add(struct htt_pdev_t *pdev, struct htt_htc_pkt *pkt);
